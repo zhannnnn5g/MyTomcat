@@ -47,7 +47,7 @@
         <dependency>
             <groupId>org.eclipse.jdt</groupId>
             <artifactId>ecj</artifactId>
-            <version>3.17.0</version>
+            <version>3.22.0</version>
         </dependency>
 
 
