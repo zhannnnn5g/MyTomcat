@@ -286,8 +286,13 @@ if [ -z "$CATALINA_LOGGING_CONFIG" ]; then
   fi
 fi
 
+#if [ -z "$LOGGING_MANAGER" ]; then
+#  LOGGING_MANAGER="-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager"
+#fi
 if [ -z "$LOGGING_MANAGER" ]; then
-  LOGGING_MANAGER="-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager"
+  JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+else
+  JAVA_OPTS="$JAVA_OPTS $LOGGING_MANAGER -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
 fi
 
 # Set UMASK unless it has been overridden
