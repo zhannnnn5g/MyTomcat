@@ -39,7 +39,7 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.res.StringManager;
 
-
+// Service 组件的具体实现类是 StandardService
 /**
  * Standard implementation of the <code>Service</code> interface.  The
  * associated Container is generally an instance of Engine, but this is
@@ -58,6 +58,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * The name of this service.
      */
+    // Service的名字
     private String name = null;
 
 
@@ -70,6 +71,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * The <code>Server</code> that owns this Service, if any.
      */
+    // 拥有该Service的Server实例
     private Server server = null;
 
     /**
@@ -81,6 +83,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * The set of Connectors associated with this Service.
      */
+    // 连接器数组
     protected Connector connectors[] = new Connector[0];
     private final Object connectorsLock = new Object();
 
@@ -89,6 +92,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      */
     protected final ArrayList<Executor> executors = new ArrayList<>();
 
+    // 对应的Engine容器
     private Engine engine = null;
 
     private ClassLoader parentClassLoader = null;
@@ -96,12 +100,16 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * Mapper.
      */
+    // 映射器
     protected final Mapper mapper = new Mapper();
 
 
     /**
      * Mapper listener.
      */
+    // 映射器的监听器。为什么还有一个 MapperListener？
+    // 这是因为 Tomcat 支持热部署，当 Web 应用的部署发生变化时，Mapper 中的映射信息也要跟着变化，
+    // MapperListener 就是一个监听器，它监听容器的变化，并把信息更新到 Mapper 中，这是典型的观察者模式。
     protected final MapperListener mapperListener = new MapperListener(this);
 
 
@@ -408,14 +416,17 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    // Service 启动方法
     @Override
     protected void startInternal() throws LifecycleException {
 
         if(log.isInfoEnabled())
             log.info(sm.getString("standardService.start.name", this.name));
+        // 1. 触发启动监听器
         setState(LifecycleState.STARTING);
 
         // Start our defined Container first
+        // 2. 先启动Engine，Engine会启动它子容器
         if (engine != null) {
             synchronized (engine) {
                 engine.start();
@@ -428,9 +439,11 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             }
         }
 
+        // 3. 再启动Mapper监听器
         mapperListener.start();
 
         // Start our defined Connectors second
+        // 4.最后启动连接器，连接器会启动它子组件，比如Endpoint
         synchronized (connectorsLock) {
             for (Connector connector: connectors) {
                 // If it has already failed, don't try and start it

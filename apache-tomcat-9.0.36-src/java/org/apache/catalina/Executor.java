@@ -18,6 +18,7 @@ package org.apache.catalina;
 
 import java.util.concurrent.TimeUnit;
 
+// Executor 是 Tomcat 定制版的线程池，它负责创建真正干活的工作线程，也就是执行 SocketProcessor 的 run 方法，
 public interface Executor extends java.util.concurrent.Executor, Lifecycle {
 
     public String getName();

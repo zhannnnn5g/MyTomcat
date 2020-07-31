@@ -32,6 +32,9 @@ public class LimitLatch {
 
     private static final Log log = LogFactory.getLog(LimitLatch.class);
 
+    // LimitLatch 内步定义了内部类 Sync，而 Sync 扩展了 AQS，
+    // AQS 是 Java 并发包中的一个核心类，它在内部维护一个状态和一个线程队列，可以用来控制线程什么时候挂起，什么时候唤醒。
+    // 我们可以扩展它来实现自己的同步器。
     private class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 1L;
 
@@ -58,6 +61,9 @@ public class LimitLatch {
     }
 
     private final Sync sync;
+    // 当前线程数被定义成原子变量 AtomicLong，
+    // limit 变量用 volatile 关键字来修饰，
+    // 注意这些并发编程的技巧运用。
     private final AtomicLong count;
     private volatile long limit;
     private volatile boolean released = false;

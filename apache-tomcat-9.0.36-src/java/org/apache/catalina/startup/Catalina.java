@@ -616,11 +616,12 @@ public class Catalina {
      * Start a new server instance.
      */
     public void start() {
-
+        // 1. 如果持有的Server实例为空，就解析server.xml创建出来
         if (getServer() == null) {
             load();
         }
 
+        // 2. 如果创建失败，报错退出
         if (getServer() == null) {
             log.fatal(sm.getString("catalina.noServer"));
             return;
@@ -628,6 +629,7 @@ public class Catalina {
 
         long t1 = System.nanoTime();
 
+        // 3.启动Server
         // Start the new server
         try {
             getServer().start();
@@ -646,6 +648,7 @@ public class Catalina {
             log.info(sm.getString("catalina.startup", Long.valueOf((t2 - t1) / 1000000)));
         }
 
+        // 创建并注册关闭钩子
         // Register shutdown hook
         if (useShutdownHook) {
             if (shutdownHook == null) {
@@ -663,6 +666,9 @@ public class Catalina {
             }
         }
 
+        // 用await方法监听停止请求
+        // Catalina的await方法调用了Server 的 await 方法。
+        // Server await中会启动一个 Socket 来监听停止端口，这样我们就能通过 shutdown 命令来关闭 Tomcat。
         if (await) {
             await();
             stop();
@@ -703,6 +709,8 @@ public class Catalina {
                     && LifecycleState.DESTROYED.compareTo(state) >= 0) {
                 // Nothing to do. stop() was already called
             } else {
+                // Catalina的stop方法，调用了Server 的 stop 方法。
+                // Server 的 stop 方法会释放和清理所有的资源
                 s.stop();
                 s.destroy();
             }
@@ -791,6 +799,8 @@ public class Catalina {
     // --------------------------------------- CatalinaShutdownHook Inner Class
 
     // XXX Should be moved to embedded !
+    // 如果我们需要在 JVM 关闭时做一些清理工作，比如将缓存数据刷到磁盘上，或者清理一些临时文件，可以向 JVM 注册一个“关闭钩子”。
+    // “关闭钩子”其实就是一个线程，JVM 在停止之前会尝试执行这个线程的 run 方法。
     /**
      * Shutdown hook which will perform a clean shutdown of Catalina if needed.
      */

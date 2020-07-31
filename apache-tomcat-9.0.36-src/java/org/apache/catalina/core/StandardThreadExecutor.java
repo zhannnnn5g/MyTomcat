@@ -120,8 +120,11 @@ public class StandardThreadExecutor extends LifecycleMBeanBase
     @Override
     protected void startInternal() throws LifecycleException {
 
+        // 定制版的任务队列
         taskqueue = new TaskQueue(maxQueueSize);
+        // 定制版的线程工厂
         TaskThreadFactory tf = new TaskThreadFactory(namePrefix,daemon,getThreadPriority());
+        // 调用Tomcat定制版的 ThreadPoolExecutor，创建线程池。
         executor = new ThreadPoolExecutor(getMinSpareThreads(), getMaxThreads(), maxIdleTime, TimeUnit.MILLISECONDS,taskqueue, tf);
         executor.setThreadRenewalDelay(threadRenewalDelay);
         if (prestartminSpareThreads) {

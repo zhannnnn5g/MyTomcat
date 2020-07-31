@@ -160,6 +160,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
     /**
      * The child Containers belonging to this Container, keyed by name.
      */
+    // ContainerBase 用 HashMap 保存了它的子容器
+    // 比如，StandardEngine 继承了 ContainerBase，Engine 的子容器是 Host，所以Engine.children中持有的是一个 Host 容器的数组
     protected final HashMap<String, Container> children = new HashMap<>();
 
 
@@ -903,6 +905,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         }
 
         // Start our child containers, if any
+        // ContainerBase 使用专门的线程池来启动子容器
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
         for (Container child : children) {

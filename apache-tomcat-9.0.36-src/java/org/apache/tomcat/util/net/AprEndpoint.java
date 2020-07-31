@@ -125,6 +125,9 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
     /**
      * Defer accept.
      */
+    // deferAccept参数它对应的是 TCP 协议中的TCP_DEFER_ACCEPT，
+    // 设置这个参数后，当 TCP 客户端有新的连接请求到达时，TCP 服务端先不建立连接，而是再等等，直到客户端有请求数据发过来时再建立连接。
+    // 这样的好处是服务端不需要用 Selector 去反复查询请求数据是否就绪。
     protected boolean deferAccept = true;
     public void setDeferAccept(boolean deferAccept) { this.deferAccept = deferAccept; }
     @Override
@@ -310,6 +313,7 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
 
         long inetAddress = Address.info(addressStr, family, getPortWithOffset(), 0, rootPool);
         // Create the APR server socket
+        // 创建JNI Socket，它里面封装了C语言实现的TCP/IP socket操作。
         serverSock = Socket.create(Address.getInfo(inetAddress).family,
                 Socket.SOCK_STREAM,
                 Socket.APR_PROTO_TCP, rootPool);
@@ -1383,6 +1387,8 @@ public class AprEndpoint extends AbstractEndpoint<Long,Long> implements SNICallB
                     // Flag to ask to reallocate the pool
                     boolean reset = false;
 
+                    // AprEndpoint 中的 Poller 并不是像 Java NIO 那样调用 Selector 来查询 Socket 的状态，
+                    // 而是通过 JNI 调用 APR 中的 poll 方法，而 APR 又是调用了操作系统的 epoll API 来实现的。
                     int rv = Poll.poll(aprPoller, pollTime, desc, true);
                     if (rv > 0) {
                         rv = mergeDescriptors(desc, rv);

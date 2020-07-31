@@ -302,6 +302,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
      */
     @Override
     protected boolean setSocketOptions(AsynchronousSocketChannel socket) {
+        // Nio2SocketWrapper 的主要作用是封装 Channel，并提供接口给 Http11Processor 读写数据。
         Nio2SocketWrapper socketWrapper = null;
         try {
             // Allocate channel and wrapper
@@ -411,6 +412,8 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
                 if (!isPaused()) {
                     // Note: as a special behavior, the completion handler for accept is
                     // always called in a separate thread.
+                    // 连接监听方法是调用accept，注意它的第二个参数是 this，表明 Nio2Acceptor 自己就是处理连接的回调类，
+                    // 因此 Nio2Acceptor 实现了 CompletionHandler 接口。
                     serverSock.accept(null, this);
                 } else {
                     state = AcceptorState.PAUSED;
@@ -420,6 +423,10 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
             }
         }
 
+        // 实现CompletionHandler接口。
+        // 具体处理连接请求的就是completed方法，它有两个参数：
+        // 第一个是异步通道，就是 accept 方法的返回值，
+        // 第二个参数是附件类，由用户自己决定，这里为 Void。
         @Override
         public void completed(AsynchronousSocketChannel socket,
                 Void attachment) {
@@ -429,11 +436,16 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
             // Configure the socket
             if (isRunning() && !isPaused()) {
                 if (getMaxConnections() == -1) {
+                    // 如果没有连接限制，继续在本线程中调用 accept 方法接收新的连接。
                     serverSock.accept(null, this);
                 } else {
                     // Accept again on a new thread since countUpOrAwaitConnection may block
+                    // 如果有连接限制，就在线程池里跑 run 方法去接收新的连接。
+                    // 那为什么要跑 run 方法呢，因为在 run 方法里会检查连接数，当连接达到最大数时，线程可能会被 LimitLatch 阻塞。
+                    // 为什么要放在线程池里跑呢？这是因为如果放在当前线程里执行，completed 方法可能被阻塞，会导致这个回调方法一直不返回。
                     getExecutor().execute(this);
                 }
+                // 处理请求。在这个方法里，会创建 Nio2SocketWrapper 和 SocketProcessor，并交给线程池处理。
                 if (!setSocketOptions(socket)) {
                     closeSocket(socket);
                 }
@@ -870,6 +882,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
                 }
             }
 
+            // 第二次调用read时，直接通过 populateReadBuffer 这个方法取数据
             int nRead = populateReadBuffer(to);
             if (nRead > 0) {
                 // The code that was notified is now reading its data
@@ -893,6 +906,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
                     }
                 } else {
                     // Fill the read buffer as best we can.
+                    // 第一次调用read时，数据没取到，会调用 fillReadBuffer 这个方法去真正执行I/O操作并注册回调函数。
                     nRead = fillReadBuffer(block);
                     if (log.isDebugEnabled()) {
                         log.debug("Socket: [" + this + "], Read into buffer: [" + nRead + "]");
@@ -1072,6 +1086,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
             Future<Integer> integer = null;
             if (block) {
                 try {
+                    // 调用read方法
                     integer = getSocket().read(to);
                     long timeout = getReadTimeout();
                     if (timeout > 0) {
@@ -1097,6 +1112,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel,AsynchronousS
                 }
             } else {
                 Nio2Endpoint.startInline();
+                // 调用read方法
                 getSocket().read(to, toTimeout(getReadTimeout()), TimeUnit.MILLISECONDS, to,
                         readCompletionHandler);
                 Nio2Endpoint.endInline();

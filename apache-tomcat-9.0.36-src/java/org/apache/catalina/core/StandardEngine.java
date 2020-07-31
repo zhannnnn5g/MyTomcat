@@ -43,6 +43,7 @@ import org.apache.catalina.util.ServerInfo;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
+// Engine 组件的具体实现类是 StandardEngine
 /**
  * Standard implementation of the <b>Engine</b> interface.  Each
  * child container must be a Host implementation to process the specific
@@ -64,6 +65,7 @@ public class StandardEngine extends ContainerBase implements Engine {
     public StandardEngine() {
 
         super();
+        // 每一个容器组件都有一个 Pipeline，Pipeline 中有一个基础阀（Basic Valve）
         pipeline.setBasic(new StandardEngineValve());
         /* Set the jmvRoute using the system property jvmRoute */
         try {
@@ -259,6 +261,7 @@ public class StandardEngine extends ContainerBase implements Engine {
         }
 
         // Standard container startup
+        // Engine 直接使用了父类ContainerBase的方法，启动 Host 子容器。
         super.startInternal();
     }
 

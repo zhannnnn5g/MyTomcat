@@ -33,6 +33,7 @@ import org.apache.tomcat.util.res.StringManager;
  * and that one will always throw a RejectedExecutionException
  *
  */
+// Tomcat根据JDK ThreadPoolExecutor 创建定制版的 ThreadPoolExecutor
 public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor {
     /**
      * The string manager for this package.
@@ -161,16 +162,26 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
      * accepted for execution - the queue is full
      * @throws NullPointerException if command or unit is null
      */
+    // Tomcat 线程池扩展了原生的 ThreadPoolExecutor，不仅限制了资源，还定制了自己的任务处理流程。
+    // 怎么定制自己的任务处理流程呢？通过重写 execute 方法实现了自己的任务处理逻辑。
     public void execute(Runnable command, long timeout, TimeUnit unit) {
+        // 在execute调用开始时调用incrementAndGet，把 submittedCount 这个原子变量加1，
+        // 并且在任务执行失败，抛出拒绝异常时，执行decrementAndGet将这个原子变量减1。
+        // Tomcat 线程池是用submittedCount 这个变量来维护已经提交到了线程池，但是还没有执行完的任务个数。
         submittedCount.incrementAndGet();
         try {
+            // 调用Java原生线程池的execute去执行任务
             super.execute(command);
         } catch (RejectedExecutionException rx) {
+            // 如果总线程数达到maximumPoolSize，Java原生线程池执行拒绝策略，
+            // 抛出RejectedExecutionException，在这里被捕获。
             if (super.getQueue() instanceof TaskQueue) {
                 final TaskQueue queue = (TaskQueue)super.getQueue();
                 try {
+                    // 继续尝试把任务放到任务队列中去（这一步是与Java 原生线程池的主要区别）
                     if (!queue.force(command, timeout, unit)) {
                         submittedCount.decrementAndGet();
+                        // 如果缓冲队列也满了，插入失败，执行拒绝策略。
                         throw new RejectedExecutionException(sm.getString("threadPoolExecutor.queueFull"));
                     }
                 } catch (InterruptedException x) {

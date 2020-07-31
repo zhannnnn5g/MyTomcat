@@ -61,7 +61,7 @@ import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.threads.TaskThreadFactory;
 
-
+// Server 组件的具体实现类是 StandardServer
 /**
  * Standard implementation of the <b>Server</b> interface, available for use
  * (but not required) when deploying and starting Catalina.
@@ -140,6 +140,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     /**
      * The set of Services associated with this Server.
      */
+    // Server 在内部维护了多个 Service 组件，以数组来保存
     private Service services[] = new Service[0];
     private final Object servicesLock = new Object();
 
@@ -509,11 +510,14 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         service.setServer(this);
 
         synchronized (servicesLock) {
+            // 创建一个 长度+1 的新数组
             Service results[] = new Service[services.length + 1];
+            // 将老的数据复制过去
             System.arraycopy(services, 0, results, 0, services.length);
             results[services.length] = service;
             services = results;
 
+            // 启动Service组件
             if (getState().isAvailable()) {
                 try {
                     service.start();
@@ -522,6 +526,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                 }
             }
 
+            // 触发监听事件
             // Report this property change to interested listeners
             support.firePropertyChange("service", null, service);
         }
@@ -579,6 +584,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         }
 
         // Set up a server socket to wait on
+        // 创建一个 Socket 监听 8005 端口
         try {
             awaitSocket = new ServerSocket(getPortWithOffset(), 1,
                     InetAddress.getByName(address));
@@ -593,6 +599,8 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             awaitThread = Thread.currentThread();
 
             // Loop waiting for a connection and a valid command
+            // 在无限循环里面接收 Socket 上的连接请求，如果有新的连接到来就建立连接，然后从 Socket 中读取数据；
+            // 如果读到的数据是停止命令“SHUTDOWN”，就退出循环，进入 stop 流程。
             while (!stopAwait) {
                 ServerSocket serverSocket = awaitSocket;
                 if (serverSocket == null) {
@@ -661,6 +669,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                 }
 
                 // Match against our command string
+                // 与停止命令“SHUTDOWN”比较，如果相等，就break，退出循环，进入 stop 流程，关闭server socket。
                 boolean match = command.toString().equals(shutdown);
                 if (match) {
                     log.info(sm.getString("standardServer.shutdownViaPort"));

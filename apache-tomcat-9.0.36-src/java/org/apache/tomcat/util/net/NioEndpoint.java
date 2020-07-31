@@ -225,6 +225,8 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
             serverSock = ServerSocketChannel.open();
             socketProperties.setProperties(serverSock.socket());
             InetSocketAddress addr = new InetSocketAddress(getAddress(), getPortWithOffset());
+            // bind 方法的第二个参数表示操作系统的等待队列长度，当应用层面的连接数到达最大值时，操作系统可以继续接收连接，
+            // 那么操作系统能继续接收的最大连接数就是这个队列长度，可以通过 acceptCount 参数配置，默认是 100。
             serverSock.socket().bind(addr,getAcceptCount());
         } else {
             // Retrieve the channel provided by the OS
@@ -236,6 +238,8 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                 throw new IllegalArgumentException(sm.getString("endpoint.init.bind.inherited"));
             }
         }
+        // 设置成阻塞模式，也就是说服务端的监听socket是阻塞的，accept调用会阻塞。
+        // 设置为false的💐话，accept返回值有可能为null
         serverSock.configureBlocking(true); //mimic APR behavior
     }
 
@@ -277,6 +281,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
             pollerThread.setDaemon(true);
             pollerThread.start();
 
+            // 创建 Acceptor 实例
             startAcceptorThread();
         }
     }
@@ -466,6 +471,8 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
 
     @Override
     protected SocketChannel serverSocketAccept() throws Exception {
+        // ServerSocketChannel 通过 accept() 接受新的连接，accept() 方法返回 SocketChannel 对象
+        // serverSocketAccept()这个方法在 Acceptor 类中被调用。
         return serverSock.accept();
     }
 
@@ -520,12 +527,15 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
         }
     }
 
+
     /**
      * Poller class.
      */
     public class Poller implements Runnable {
-
+        // Poller 本质是一个 Selector
         private Selector selector;
+        // 它内部维护一个 PollerEvent 的 Queue。
+        // 每个 Poller 线程可能同时被多个 Acceptor 线程调用来注册 PollerEvent
         private final SynchronizedQueue<PollerEvent> events =
                 new SynchronizedQueue<>();
 
@@ -743,6 +753,8 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         iterator.remove();
                     } else {
                         iterator.remove();
+                        // Poller 不断的通过内部的 Selector 对象向内核查询 Channel 的状态，
+                        // 一旦可读就生成任务类 SocketProcessor 交给 Executor 去处理。
                         processKey(sk, socketWrapper);
                     }
                 }
@@ -1537,6 +1549,12 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
      * This class is the equivalent of the Worker, but will simply use in an
      * external Executor thread pool.
      */
+    // Poller 会创建 SocketProcessor 任务类交给线程池处理，而 SocketProcessor 实现了 Runnable 接口，用来定义 Executor 中线程所执行的任务，
+    // 主要就是调用 Http11Processor 组件来处理请求。Http11Processor 读取 Channel 的数据来生成 ServletRequest 对象。
+    // Http11Processor 并不是直接读取 Channel 的。这是因为 Tomcat 支持同步非阻塞 I/O 模型和异步 I/O 模型，
+    // 在 Java API 中，相应的 Channel 类也是不一样的，比如有 AsynchronousSocketChannel 和 SocketChannel，
+    // 为了对 Http11Processor 屏蔽这些差异，Tomcat 设计了一个包装类叫作 SocketWrapper，
+    // Http11Processor 只调用 SocketWrapper 的方法去读写数据。
     protected class SocketProcessor extends SocketProcessorBase<NioChannel> {
 
         public SocketProcessor(SocketWrapperBase<NioChannel> socketWrapper, SocketEvent event) {
