@@ -302,6 +302,7 @@ public class HostConfig implements LifecycleListener {
 
         // Process the event that has occurred
         if (event.getType().equals(Lifecycle.PERIODIC_EVENT)) {
+            // 周期事件监听器，执行 check 方法
             check();
         } else if (event.getType().equals(Lifecycle.BEFORE_START_EVENT)) {
             beforeStart();
@@ -1604,9 +1605,11 @@ public class HostConfig implements LifecycleListener {
 
         if (host.getAutoDeploy()) {
             // Check for resources modification to trigger redeployment
+            // 检查这个Host下所有已经部署的Web应用
             DeployedApplication[] apps =
                 deployed.values().toArray(new DeployedApplication[0]);
             for (DeployedApplication app : apps) {
+                // 检查Web应用目录是否有变化
                 if (!isServiced(app.name))
                     checkResources(app, false);
             }
@@ -1617,6 +1620,7 @@ public class HostConfig implements LifecycleListener {
             }
 
             // Hotdeploy applications
+            // 执行热部署
             deployApps();
         }
     }

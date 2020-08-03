@@ -1119,12 +1119,21 @@ public abstract class ContainerBase extends LifecycleMBeanBase
      * invoked inside the classloading context of this container. Unexpected
      * throwables will be caught and logged.
      */
+    // 如果具体容器类（也就是 ContainerBase 的子类）有周期性任务要执行，则它可以重写 backgroundProcess 方法；
+    // 如果没有自己的周期性任务执行，就重用基类 ContainerBase 的 backgroundProcess 方法。也就是这里的实现。
+    // Tomcat 热加载是在 Context 容器中实现的，它重写了 backgroundProcess 方法。
+    // Tomcat 热部署又是由哪个容器来实现的呢？
+    // 是在 Host 容器中实现的，它是 Context 容器的父容器。
+    // 跟 Context 不一样的是，Host 容器并没有重写 backgroundProcess 方法，而是重用了 ContainerBase 基类中这里的实现，
+    // 通过监听器 HostConfig 来实现周期性检测的任务，HostConfig 就是“周期事件”的监听器，
+    // 它所做的工作主要在 lifecycleEvent 方法中实现，也就是 fireLifecycleEvent 方法中调用的方法。
     @Override
     public void backgroundProcess() {
 
         if (!getState().isAvailable())
             return;
 
+        // 1.执行容器中Cluster组件（集群管理有关）的周期性任务
         Cluster cluster = getClusterInternal();
         if (cluster != null) {
             try {
@@ -1134,6 +1143,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                         cluster), e);
             }
         }
+
+        // 2.执行容器中Realm组件（安全管理有关）的周期性任务
         Realm realm = getRealmInternal();
         if (realm != null) {
             try {
@@ -1142,6 +1153,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                 log.warn(sm.getString("containerBase.backgroundProcess.realm", realm), e);
             }
         }
+
+        // 3.执行容器中Valve组件的周期性任务
         Valve current = pipeline.getFirst();
         while (current != null) {
             try {
@@ -1151,6 +1164,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             }
             current = current.getNext();
         }
+
+        // 4. 触发容器的"周期事件"，Host容器的监听器HostConfig就靠它来调用
         fireLifecycleEvent(Lifecycle.PERIODIC_EVENT, null);
     }
 
@@ -1265,6 +1280,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
     // -------------------- Background Thread --------------------
 
+    // Tomcat 用后台线程来实现热加载和热部署。
     /**
      * Start the background thread that will periodically check for
      * session timeouts.
@@ -1281,6 +1297,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                     log.error(sm.getString("containerBase.backgroundProcess.error"), e);
                 }
             }
+            // scheduleWithFixedDelay方法，用来开启后台线程。
+            // 1st参数：要周期性执行的任务类 ContainerBackgroundProcessor，它是一个 Runnable，同时也是 ContainerBase 的内部类，
+            // ContainerBase 是所有容器组件的基类，容器组件有 Engine、Host、Context 和 Wrapper 等。
             backgroundProcessorFuture = Container.getService(this).getServer().getUtilityExecutor()
                     .scheduleWithFixedDelay(new ContainerBackgroundProcessor(),
                             backgroundProcessorDelay, backgroundProcessorDelay,
@@ -1335,9 +1354,14 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         @Override
         public void run() {
+            // 请注意这里传入的参数是"宿主类"的实例，也就是 ContainerBase 的类实例，当成参数传给了 run 方法
             processChildren(ContainerBase.this);
         }
 
+        // processChildren 方法实现的主要功能分2步: 调用当前容器的 backgroundProcess 方法，以及递归调用子孙的 backgroundProcess 方法。
+        // 注意 backgroundProcess 是 Container 接口中的方法，也就是说所有类型的容器都可以实现这个方法，在这个方法里完成需要周期性执行的任务。
+        // 这样的设计意味着什么呢？
+        // 我们只需要在顶层容器，也就是 Engine 容器中启动一个后台线程，这个线程不但会执行 Engine 容器的周期性任务，还会执行所有子容器的周期性任务。
         protected void processChildren(Container container) {
             ClassLoader originalClassLoader = null;
 
@@ -1353,9 +1377,14 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                     // is performed under the web app's class loader
                     originalClassLoader = ((Context) container).bind(false, null);
                 }
+                // 1. 调用当前容器的backgroundProcess方法。
                 container.backgroundProcess();
+
+                //2. 遍历所有的子容器，递归调用processChildren，这样当前容器的子孙都会被处理
                 Container[] children = container.findChildren();
                 for (Container child : children) {
+                    // 这里注意，容器基类有个变量叫做backgroundProcessorDelay，
+                    // 如果大于0，表明子容器有自己的后台线程，无需父容器来调用它的processChildren方法。
                     if (child.getBackgroundProcessorDelay() <= 0) {
                         processChildren(child);
                     }

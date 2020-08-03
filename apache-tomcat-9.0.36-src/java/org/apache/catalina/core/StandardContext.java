@@ -101,6 +101,7 @@ import org.apache.catalina.Wrapper;
 import org.apache.catalina.deploy.NamingResourcesImpl;
 import org.apache.catalina.loader.WebappLoader;
 import org.apache.catalina.session.StandardManager;
+import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.util.CharsetMapper;
 import org.apache.catalina.util.ContextName;
 import org.apache.catalina.util.ErrorPageSupport;
@@ -5515,12 +5516,15 @@ public class StandardContext extends ContainerBase
     }
 
 
+    // Tomcat 的热加载，是在 Context 容器中实现的。Context 容器的 backgroundProcess 方法实现如下。
+    // Tomcat 的热加载默认是关闭的，你需要在 conf 目录下的 context.xml 文件中设置 reloadable 参数来开启这个功能：<Context reloadable="true"/>
     @Override
     public void backgroundProcess() {
 
         if (!getState().isAvailable())
             return;
 
+        // WebappLoader周期性的检查WEB-INF/classes和WEB-INF/lib目录下的类文件
         Loader loader = getLoader();
         if (loader != null) {
             try {
@@ -5530,6 +5534,8 @@ public class StandardContext extends ContainerBase
                         "standardContext.backgroundProcess.loader", loader), e);
             }
         }
+
+        // Session管理器周期性的检查是否有过期的Session
         Manager manager = getManager();
         if (manager != null) {
             try {
@@ -5540,6 +5546,8 @@ public class StandardContext extends ContainerBase
                         e);
             }
         }
+
+        // 周期性的检查静态资源是否有变化
         WebResourceRoot resources = getResources();
         if (resources != null) {
             try {
@@ -5560,6 +5568,8 @@ public class StandardContext extends ContainerBase
                         resources), e);
             }
         }
+
+        // 调用父类 ContainerBase 的 backgroundProcess 方法
         super.backgroundProcess();
     }
 
