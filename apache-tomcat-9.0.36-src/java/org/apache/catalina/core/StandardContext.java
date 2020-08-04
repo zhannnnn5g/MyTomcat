@@ -223,6 +223,7 @@ public class StandardContext extends ContainerBase
      * SCIs and other code may use the pluggability APIs to add listener
      * instances directly to this list before the application starts.
      */
+    // 监听属性值变化的监听器
     private List<Object> applicationEventListenersList = new CopyOnWriteArrayList<>();
 
 
@@ -231,6 +232,7 @@ public class StandardContext extends ContainerBase
      * SCIs and other code may use the pluggability APIs to add listener
      * instances directly to this list before the application starts.
      */
+    // 监听生命事件的监听器
     private Object applicationLifecycleListenersObjects[] =
         new Object[0];
 
@@ -383,6 +385,7 @@ public class StandardContext extends ContainerBase
      * The set of filter definitions for this application, keyed by
      * filter name.
      */
+    // Filter 的作用域是整个 Web 应用，因此 Filter 的实例是在 Context 容器中进行管理的，Context 容器用 Map 集合来保存 Filter
     private Map<String, FilterDef> filterDefs = new HashMap<>();
 
 
@@ -4655,6 +4658,7 @@ public class StandardContext extends ContainerBase
         getServletContext();
         context.setNewServletContextListenerAllowed(false);
 
+        // 1.拿到所有的生命周期监听器
         Object instances[] = getApplicationLifecycleListeners();
         if (instances == null || instances.length == 0) {
             return ok;
@@ -4667,6 +4671,7 @@ public class StandardContext extends ContainerBase
             tldEvent = new ServletContextEvent(noPluggabilityServletContext);
         }
         for (Object instance : instances) {
+            // 2. 判断每个生命周期监听器的类型是不是 ServletContextListener
             if (!(instance instanceof ServletContextListener)) {
                 continue;
             }
@@ -4676,6 +4681,7 @@ public class StandardContext extends ContainerBase
                 if (noPluggabilityListeners.contains(listener)) {
                     listener.contextInitialized(tldEvent);
                 } else {
+                    // 3.触发Listener的方法
                     listener.contextInitialized(event);
                 }
                 fireContainerEvent("afterContextInitialized", listener);

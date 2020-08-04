@@ -18,6 +18,8 @@ package org.apache.catalina.loader;
 
 import org.apache.catalina.LifecycleException;
 
+// WebAppClassLoader 是 Tomcat 的自定义类加载器，它打破了双亲委托机制，它首先自己尝试去加载某个类，如果找不到再代理给父类加载器，
+// 其目的是优先加载 Web 应用自己定义的类。具体实现是重写 ClassLoader 的两个方法（在WebAppClassLoaderBase中）：findClass 和 loadClass。
 public class WebappClassLoader extends WebappClassLoaderBase {
 
     public WebappClassLoader() {

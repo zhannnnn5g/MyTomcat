@@ -71,6 +71,7 @@ public final class ApplicationFilterChain implements FilterChain {
     /**
      * Filters.
      */
+    // Filter链中有Filter数组
     private ApplicationFilterConfig[] filters = new ApplicationFilterConfig[0];
 
 
@@ -78,18 +79,21 @@ public final class ApplicationFilterChain implements FilterChain {
      * The int which is used to maintain the current position
      * in the filter chain.
      */
+    // Filter链中的当前的调用位置
     private int pos = 0;
 
 
     /**
      * The int which gives the current number of filters in the chain.
      */
+    // 总共有多少了Filter
     private int n = 0;
 
 
     /**
      * The servlet instance to be executed by this chain.
      */
+    // 每个Filter链对应一个Servlet，也就是它要调用的Servlet
     private Servlet servlet = null;
 
 
@@ -133,6 +137,7 @@ public final class ApplicationFilterChain implements FilterChain {
      * @exception IOException if an input/output error occurs
      * @exception ServletException if a servlet exception occurs
      */
+    // Filter 链本身也实现了 doFilter 方法，直接调用了一个内部方法 internalDoFilter。
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException, ServletException {
@@ -171,6 +176,8 @@ public final class ApplicationFilterChain implements FilterChain {
                                   ServletResponse response)
         throws IOException, ServletException {
 
+        // 做一个判断，如果当前 Filter 的位置小于 Filter 数组的长度，也就是说 Filter 还没调完，就从 Filter 数组拿下一个 Filter，调用它的 doFilter 方法。
+        // 否则，意味着所有 Filter 都调到了，就调用 Servlet 的 service 方法。Filter 链中的最后一个 Filter 会负责调用 Servlet 的 service 方法。
         // Call the next filter if there is one
         if (pos < n) {
             ApplicationFilterConfig filterConfig = filters[pos++];

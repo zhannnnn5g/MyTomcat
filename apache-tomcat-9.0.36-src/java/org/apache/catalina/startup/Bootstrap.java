@@ -142,6 +142,8 @@ public final class Bootstrap {
 
     private void initClassLoaders() {
         try {
+            // 创建Tomcat自己的类加载🕖器依赖体系。
+            // CommonLoader 是 CatalinaLoader 和 SharedLoader 的父加载器
             commonLoader = createClassLoader("common", null);
             if (commonLoader == null) {
                 // no config file, default to this loader - we might be in a 'single' env.

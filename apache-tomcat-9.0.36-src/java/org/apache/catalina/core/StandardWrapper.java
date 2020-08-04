@@ -127,6 +127,8 @@ public class StandardWrapper extends ContainerBase
     /**
      * The (single) possibly uninitialized instance of this servlet.
      */
+    // Tomcat 用 Wrapper 容器来管理 Servlet，因此 Wrapper 拥有一个 Servlet 实例，
+    // 并且 Wrapper 通过 loadServlet() 方法来实例化 Servlet。
     protected volatile Servlet instance = null;
 
 
@@ -1039,6 +1041,7 @@ public class StandardWrapper extends ContainerBase
 
             InstanceManager instanceManager = ((StandardContext)getParent()).getInstanceManager();
             try {
+                // 1. 创建一个Servlet实例
                 servlet = (Servlet) instanceManager.newInstance(servletClass);
             } catch (ClassCastException e) {
                 unavailable(null);
@@ -1086,6 +1089,7 @@ public class StandardWrapper extends ContainerBase
                 singleThreadModel = true;
             }
 
+            // 2.调用了Servlet的init方法，这是Servlet规范要求的
             initServlet(servlet);
 
             fireContainerEvent("load", this);
