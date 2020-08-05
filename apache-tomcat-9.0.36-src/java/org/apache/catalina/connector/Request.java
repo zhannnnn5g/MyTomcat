@@ -2948,6 +2948,7 @@ public class Request implements HttpServletRequest {
 
     // ------------------------------------------------------ Protected Methods
 
+    // Session的创建逻辑的具体实现
     protected Session doGetSession(boolean create) {
 
         // There cannot be a session if no context has been assigned yet
@@ -3040,6 +3041,7 @@ public class Request implements HttpServletRequest {
         } else {
             sessionId = null;
         }
+        // 创建 Session
         session = manager.createSession(sessionId);
 
         // Creating a new session cookie based on that session

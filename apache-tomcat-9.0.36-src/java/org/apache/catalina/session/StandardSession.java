@@ -80,6 +80,9 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Sean Legassick
  * @author <a href="mailto:jon@latchkey.com">Jon S. Stevens</a>
  */
+// Session 的具体实现类是 StandardSession，
+// StandardSession 同时实现了 javax.servlet.http.HttpSession 和 org.apache.catalina.Session接口，
+// HttpSession 是Servlet规范中定义的接口，Session是Tomcat内部封装HttpSession功能的Facade接口。
 public class StandardSession implements HttpSession, Session, Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -346,17 +349,21 @@ public class StandardSession implements HttpSession, Session, Serializable {
     /**
      * {@inheritDoc}
      */
+    // Session 事件通知功能在setId方法中实现。
     @Override
     public void setId(String id, boolean notify) {
 
+        // 如果这个id已经存在，先从Manager中删除
         if ((this.id != null) && (manager != null))
             manager.remove(this);
 
         this.id = id;
 
+        // 添加新的Session
         if (manager != null)
             manager.add(this);
 
+        // tellNew方法里面完成了HttpSessionListener事件通知
         if (notify) {
             tellNew();
         }
@@ -370,21 +377,27 @@ public class StandardSession implements HttpSession, Session, Serializable {
     public void tellNew() {
 
         // Notify interested session event listeners
+        // 通知 org.apache.catalina.SessionListener
         fireSessionEvent(Session.SESSION_CREATED_EVENT, null);
 
         // Notify interested application event listeners
+        // 获取 StandardContext 内部的 LifecycleListener 并判断是否为 HttpSessionListener
         Context context = manager.getContext();
         Object listeners[] = context.getApplicationLifecycleListeners();
         if (listeners != null && listeners.length > 0) {
             HttpSessionEvent event =
                 new HttpSessionEvent(getSession());
             for (Object o : listeners) {
+                // 判断是否为 HttpSessionListener，如果是的话则调用 HttpSessionListener 的 sessionCreated 方法进行事件通知。
                 if (!(o instanceof HttpSessionListener))
                     continue;
                 HttpSessionListener listener = (HttpSessionListener) o;
                 try {
+                    // 注意这是容器内部事件
                     context.fireContainerEvent("beforeSessionCreated", listener);
+                    // 触发 Session Created 事件
                     listener.sessionCreated(event);
+                    // 注意这也是容器内部事件
                     context.fireContainerEvent("afterSessionCreated", listener);
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);

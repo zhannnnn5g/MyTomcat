@@ -584,8 +584,12 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
      * <p>
      * Direct call to {@link #processExpires()}
      */
+    // backgroundProcess 由 Tomcat 后台线程调用，默认是每隔 10 秒调用一次，在该方法中会完成 Session 的清理工作。
+    // 但是 Session 的清理动作不能太频繁，因为需要遍历 Session 列表，会耗费 CPU 资源，所以在 backgroundProcess 方法中做了取模处理，
+    // backgroundProcess 调用 6 次，才执行一次 Session 清理，也就是说 Session 清理每 60 秒执行一次。
     @Override
     public void backgroundProcess() {
+        // processExpiresFrequency 默认值为6，而backgroundProcess默认每隔10s调用一次，也就是说每隔 60s 执行一次 processExpires。
         count = (count + 1) % processExpiresFrequency;
         if (count == 0)
             processExpires();
@@ -594,14 +598,17 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
     /**
      * Invalidate all sessions that have expired.
      */
+    // 单线程处理，不存在线程安全问题
     public void processExpires() {
 
         long timeNow = System.currentTimeMillis();
+        // 获取所有的 Session
         Session sessions[] = findSessions();
         int expireHere = 0 ;
 
         if(log.isDebugEnabled())
             log.debug("Start expire sessions " + getName() + " at " + timeNow + " sessioncount " + sessions.length);
+        // Session 的过期是在isValid()方法里处理的
         for (Session session : sessions) {
             if (session != null && !session.isValid()) {
                 expireHere++;
@@ -696,6 +703,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
     @Override
     public Session createSession(String sessionId) {
 
+        // 首先判断Session数量是不是到了最大值，最大Session数可以通过参数设置
         if ((maxActiveSessions >= 0) &&
                 (getActiveSessions() >= maxActiveSessions)) {
             rejectedSessions++;
@@ -705,9 +713,12 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
         }
 
         // Recycle or create a Session instance
+        // 重用或者创建一个新的Session对象，请注意在Tomcat中就是StandardSession，
+        // 它是HttpSession的具体实现类，而HttpSession是Servlet规范中定义的接口。
         Session session = createEmptySession();
 
         // Initialize the properties of the new session and return it
+        // 初始化新Session的值
         session.setNew(true);
         session.setValid(true);
         session.setCreationTime(System.currentTimeMillis());
@@ -716,9 +727,12 @@ public abstract class ManagerBase extends LifecycleMBeanBase implements Manager 
         if (id == null) {
             id = generateSessionId();
         }
+        // 这里会将Session添加到ConcurrentHashMap中
         session.setId(id);
         sessionCounter++;
 
+        // 将创建时间添加到LinkedList中，并且把最先添加的时间移除
+        // 主要还是方便清理过期Session
         SessionTiming timing = new SessionTiming(session.getCreationTime(), 0);
         synchronized (sessionCreationTiming) {
             sessionCreationTiming.add(timing);

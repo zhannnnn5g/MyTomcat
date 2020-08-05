@@ -27,6 +27,8 @@ import java.util.EventListener;
  * @see HttpSessionEvent
  * @since v 2.3
  */
+// HttpSessionListener 是 Servlet 规范定义的 Session 的监听器接口。
+// 按照 Servlet 规范，在 Session 的生命周期过程中，要将事件通知监听者，事件就是 HttpSessionEvent 对象。
 public interface HttpSessionListener extends EventListener {
 
     /**
@@ -36,6 +38,7 @@ public interface HttpSessionListener extends EventListener {
      * @param se
      *            the notification event
      */
+    // Session创建时调用
     public default void sessionCreated(HttpSessionEvent se) {
     }
 
@@ -46,6 +49,7 @@ public interface HttpSessionListener extends EventListener {
      * @param se
      *            the notification event
      */
+    // Session销毁时调用
     public default void sessionDestroyed(HttpSessionEvent se) {
     }
 }

@@ -26,6 +26,8 @@ import javax.servlet.http.HttpSession;
  *
  * @author Remy Maucherat
  */
+//  StandardSessionFacade 是 StandardSession 的Facade封装类，
+//  保证了 StandardSession 的安全，避免用户调用StandardSession内部方法进行不当操作。
 public class StandardSessionFacade implements HttpSession {
 
     // ----------------------------------------------------------- Constructors

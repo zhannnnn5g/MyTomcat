@@ -893,6 +893,7 @@ public class RequestFacade implements HttpServletRequest {
     }
 
 
+    // 获取Session，boolean create参数控制是否创建，如果没有就创建。
     @Override
     public HttpSession getSession(boolean create) {
 
