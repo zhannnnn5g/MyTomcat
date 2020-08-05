@@ -296,6 +296,7 @@ public class CoyoteAdapter implements Adapter {
     }
 
 
+    // Tomcat 连接器是调用 CoyoteAdapter 的 service 方法来处理请求的。
     @Override
     public void service(org.apache.coyote.Request req, org.apache.coyote.Response res)
             throws Exception {
@@ -340,9 +341,13 @@ public class CoyoteAdapter implements Adapter {
                 request.setAsyncSupported(
                         connector.getService().getContainer().getPipeline().isAsyncSupported());
                 // Calling the container
+                // CoyoteAdapter 调用容器的 service 方法处理请求
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);
             }
+
+            // 判断当前的请求是不是异步 Servlet 请求。
+            // 如果是异步Servlet请求，仅仅设置一个标志，否则说明是同步Servlet请求，就将响应数据刷到浏览器
             if (request.isAsync()) {
                 async = true;
                 ReadListener readListener = req.getReadListener();
@@ -370,6 +375,7 @@ public class CoyoteAdapter implements Adapter {
                     request.getAsyncContextInternal().setErrorState(throwable, true);
                 }
             } else {
+                // 将响应数据刷到浏览器
                 request.finishRequest();
                 response.finishResponse();
             }
@@ -420,6 +426,7 @@ public class CoyoteAdapter implements Adapter {
             // Recycle the wrapper request and response
             if (!async) {
                 updateWrapperErrorCount(request, response);
+                // 如果不是异步Servlet请求，就销毁Request对象和Response对象
                 request.recycle();
                 response.recycle();
             }

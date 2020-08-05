@@ -88,7 +88,9 @@ public class AsyncContextImpl implements AsyncContext, AsyncContextCallback {
         if (log.isDebugEnabled()) {
             logDebug("complete   ");
         }
+        // 检查状态合法性
         check();
+        // 调用Request对象的action方法，其实就是通知连接器，这个异步请求处理完了
         request.getCoyoteRequest().action(ActionCode.ASYNC_COMPLETE, null);
     }
 
