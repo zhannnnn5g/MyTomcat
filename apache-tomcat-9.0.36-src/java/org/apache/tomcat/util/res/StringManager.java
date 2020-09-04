@@ -49,6 +49,7 @@ import java.util.ResourceBundle;
  * @author Mel Martinez [mmartinez@g1440.com]
  * @see java.util.ResourceBundle
  */
+// 用来处理应用程序不同模块和tomcat本身错误消息的国际化操作
 public class StringManager {
 
     private static int LOCALE_CACHE_SIZE = 10;
@@ -68,6 +69,7 @@ public class StringManager {
      *
      * @param packageName Name of package to create StringManager for.
      */
+    // StringManager是一个singleton，构造函数为私有的。
     private StringManager(String packageName, Locale locale) {
         String bundleName = packageName + ".LocalStrings";
         ResourceBundle bnd = null;
@@ -186,7 +188,10 @@ public class StringManager {
     // --------------------------------------------------------------
     // STATIC SUPPORT METHODS
     // --------------------------------------------------------------
-
+    // 每个StringManager实例都会以包名作为key，存储在一个Hashtable中。
+    // StringManager实例的创建有2层的层次关系，首先第一层是包名，如果没有对应包名key的值，则创建一个Map<Locale,StringManager>
+    // 然后是第二层locale，如果该Map<Locale,StringManager>中没有对应locale key的值，则创建一个StringManager
+    // 所以不同包名+不同locale 对应一个StringManager实例
     private static final Map<String, Map<Locale,StringManager>> managers =
             new Hashtable<>();
 
@@ -216,6 +221,7 @@ public class StringManager {
      * @return The instance associated with the given package and the default
      *         Locale
      */
+    // 以packageName为key，获取 StringManager，locale为系统默认locale
     public static final StringManager getManager(String packageName) {
         return getManager(packageName, Locale.getDefault());
     }
@@ -244,6 +250,7 @@ public class StringManager {
              * for removal needs to use one less than the maximum desired size
              *
              */
+            // 如果packageName没有对应的StringManager，则创建一个。
             map = new LinkedHashMap<Locale,StringManager>(LOCALE_CACHE_SIZE, 1, true) {
                 private static final long serialVersionUID = 1L;
                 @Override
@@ -255,11 +262,13 @@ public class StringManager {
                     return false;
                 }
             };
+            // 放入Hashtable中
             managers.put(packageName, map);
         }
 
         StringManager mgr = map.get(locale);
         if (mgr == null) {
+            // 创建一个StringManager
             mgr = new StringManager(packageName, locale);
             map.put(locale, mgr);
         }

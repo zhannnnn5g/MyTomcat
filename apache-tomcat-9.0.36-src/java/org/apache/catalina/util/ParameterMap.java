@@ -37,6 +37,9 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  */
+// Servlet编写者不可以修改参数值，因此，catalina重写了一个特殊的Map类：ParameterMap
+// 它继承自 Map，其中有一个名为locked的bool值，用于控制向ParameterMap中添加更新或删除参数KV对
+// 当locked 为true时，不允许修改锁定的参数映射
 public final class ParameterMap<K,V> implements Map<K,V>, Serializable {
 
     private static final long serialVersionUID = 2L;
