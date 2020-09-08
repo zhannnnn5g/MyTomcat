@@ -117,6 +117,8 @@ public abstract class LifecycleBase implements Lifecycle {
      * @param type  Event type
      * @param data  Data associated with event.
      */
+    // 当要触发某个事件时，可以调用 fireLifecycleEvent 方法。
+    // 它会在内部遍历监听器数组，并调用每个监听器的lifecycleEvent方法，传入要触发的事件。
     protected void fireLifecycleEvent(String type, Object data) {
         LifecycleEvent event = new LifecycleEvent(this, type, data);
         for (LifecycleListener listener : lifecycleListeners) {

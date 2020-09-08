@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
  *
  * @author Craig R. McClanahan
  */
+// Host表示一个虚拟主机，一个Host中可以含有一个或多个Context容器。
 public interface Host extends Container {
 
 

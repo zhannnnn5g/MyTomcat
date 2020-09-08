@@ -275,6 +275,8 @@ public class FileHandler extends Handler {
                 writerLock.writeLock().lock();
                 try {
                     // Make sure another thread hasn't already done this
+                    // 如果tsDate与date成员变量相比较时不相等，则会关闭当前日志文件，
+                    // 将tsDate赋给date，并打开一个新的日志文件。
                     if (!date.equals(tsDate)) {
                         closeWriter();
                         date = tsDate;
@@ -289,6 +291,7 @@ public class FileHandler extends Handler {
                 }
             }
 
+            // 获取record中要记录的信息，转为可写入文件的字符串
             String result = null;
             try {
                 result = getFormatter().format(record);
@@ -299,6 +302,7 @@ public class FileHandler extends Handler {
 
             try {
                 if (writer != null) {
+                    // Destination！！！ 写入日志
                     writer.write(result);
                     if (bufferSize.intValue() < 0) {
                         writer.flush();
@@ -322,6 +326,8 @@ public class FileHandler extends Handler {
     /**
      * Close the currently open log file (if any).
      */
+    // 该方法负责确保将PrintWriter中所有的日志消息都写入到文件中，然后关闭PrintWriter实例，
+    // 将PrintWriter实例的引用置为null，并将日期字符串清空。
     @Override
     public void close() {
         closeWriter();
@@ -482,6 +488,7 @@ public class FileHandler extends Handler {
     /**
      * Open the new log file for the date specified by <code>date</code>.
      */
+    // 该方法在指定的目录创建一个新的日志文件
     protected void open() {
         openWriter();
     }

@@ -24,6 +24,7 @@ import java.util.EventObject;
  *
  * @author Craig R. McClanahan
  */
+// LifecycleEvent代表生命周期的事件。
 public final class LifecycleEvent extends EventObject {
 
     private static final long serialVersionUID = 1L;

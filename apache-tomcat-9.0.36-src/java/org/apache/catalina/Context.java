@@ -58,6 +58,7 @@ import org.apache.tomcat.util.http.CookieProcessor;
  *
  * @author Craig R. McClanahan
  */
+// Context的实例表示一个Web应用程序，一个Context可以含有多个Wrapper。
 public interface Context extends Container, ContextBind {
 
 

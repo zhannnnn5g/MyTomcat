@@ -23,6 +23,7 @@ package org.apache.catalina;
  * @author Craig R. McClanahan
  * @author Peter Donald
  */
+// 如果某个类实现Contained接口，就表明该类可以通过接口中的方法至多与一个Servlet容器相关联。
 public interface Contained {
 
     /**

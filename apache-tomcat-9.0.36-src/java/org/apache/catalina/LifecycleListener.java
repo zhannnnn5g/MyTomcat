@@ -27,6 +27,7 @@ package org.apache.catalina;
  *
  * @author Craig R. McClanahan
  */
+// 事件监听器，对LifecycleEvent事件进行响应。
 public interface LifecycleListener {
 
 

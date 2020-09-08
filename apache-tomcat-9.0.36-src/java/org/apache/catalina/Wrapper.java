@@ -46,6 +46,7 @@ import javax.servlet.UnavailableException;
  *
  * @author Craig R. McClanahan
  */
+// Wrapper接口的实例代表一个独立的Servlet
 public interface Wrapper extends Container {
 
     /**
@@ -123,6 +124,7 @@ public interface Wrapper extends Container {
      *
      * @param servletClass Servlet class name
      */
+    // 设置Servlet类名字字符串，告诉Wrapper实例要载入的Servlet类的名称。
     public void setServletClass(String servletClass);
 
 
@@ -204,6 +206,7 @@ public interface Wrapper extends Container {
      * @exception ServletException if a loading error occurs
      * @return a new Servlet instance
      */
+    // 该方法会分配一个已经初始化的servlet实例
     public Servlet allocate() throws ServletException;
 
 
@@ -272,6 +275,7 @@ public interface Wrapper extends Container {
      * @exception ServletException if the Servlet init() method threw
      *  an exception or if some other loading problem occurs
      */
+    // 该方法载入并初始化servlet类
     public void load() throws ServletException;
 
 

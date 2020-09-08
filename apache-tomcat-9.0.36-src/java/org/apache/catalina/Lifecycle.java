@@ -80,6 +80,7 @@ package org.apache.catalina;
  *
  * @author Craig R. McClanahan
  */
+// Lifecycle接口，用来管理生命周期。通过实现该接口，可以达到统一启动，统一关闭容器组件的效果。
 public interface Lifecycle {
 
 
