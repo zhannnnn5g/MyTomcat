@@ -1350,6 +1350,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
      * Private runnable class to invoke the backgroundProcess method
      * of this container and its children after a fixed delay.
      */
+    // ContainerBase类的内部类，实现了Runnable接口，在一个线程中周期性的调用各容器的backgroundProcess()方法。
     protected class ContainerBackgroundProcessor implements Runnable {
 
         @Override

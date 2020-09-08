@@ -322,6 +322,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
     /**
      * The parent class loader.
      */
+    // 父类载入器实例
     protected final ClassLoader parent;
 
 
@@ -331,6 +332,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
      * those cases {@link ClassLoader#getParent()} will be called recursively on
      * the system class loader and the last non-null result used.
      */
+    // 类载入器实例
     private ClassLoader javaseClassLoader;
 
 
@@ -2536,6 +2538,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
      *                <code>false</code> if name is a resource name
      * @return <code>true</code> if the class should be filtered
      */
+    // 考虑到安全性，某些特殊的包及其子包下的类是不允许载入的。使用filter()方法来判断。
     protected boolean filter(String name, boolean isClassName) {
 
         if (name == null)

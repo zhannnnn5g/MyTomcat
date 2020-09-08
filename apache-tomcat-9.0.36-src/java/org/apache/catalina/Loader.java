@@ -47,6 +47,7 @@ import java.beans.PropertyChangeListener;
  *
  * @author Craig R. McClanahan
  */
+// Tomcat类载入器接口
 public interface Loader {
 
 
@@ -91,6 +92,7 @@ public interface Loader {
      *
      * @param delegate The new flag
      */
+    // 指明是否要委托给一个父类载入器
     public void setDelegate(boolean delegate);
 
 

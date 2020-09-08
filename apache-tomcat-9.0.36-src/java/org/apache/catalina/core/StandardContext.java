@@ -3732,6 +3732,7 @@ public class StandardContext extends ContainerBase
      * @exception IllegalStateException if the <code>reloadable</code>
      *  property is set to <code>false</code>.
      */
+    // 重新加载容器，实现热加载功能的代码最终会调用到这个方法。
     @Override
     public synchronized void reload() {
 
@@ -5522,7 +5523,8 @@ public class StandardContext extends ContainerBase
     }
 
 
-    // Tomcat 的热加载，是在 Context 容器中实现的。Context 容器的 backgroundProcess 方法实现如下。
+    // Tomcat 的热加载，是在 Context 容器中实现的。它会检查类是否被修改。
+    // Context 容器的 backgroundProcess 方法实现如下。
     // Tomcat 的热加载默认是关闭的，你需要在 conf 目录下的 context.xml 文件中设置 reloadable 参数来开启这个功能：<Context reloadable="true"/>
     @Override
     public void backgroundProcess() {

@@ -61,6 +61,7 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
+// WebappLoader 类是 Loader 接口的实现类
 public class WebappLoader extends LifecycleMBeanBase
     implements Loader, PropertyChangeListener {
 
@@ -99,6 +100,7 @@ public class WebappLoader extends LifecycleMBeanBase
     /**
      * The class loader being managed by this Loader component.
      */
+    // 包装的类载入器实例，WebappClassLoaderBase中含有真正的类载入器实例
     private WebappClassLoaderBase classLoader = null;
 
 
