@@ -91,6 +91,8 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  */
+// AuthenticatorBase是Authenticator接口的实现类，
+// 它是一个抽象类，具体的实现类有BasicAuthenticator，FormAuthenticator等。
 public abstract class AuthenticatorBase extends ValveBase
         implements Authenticator, RegistrationListener {
 
@@ -496,6 +498,7 @@ public abstract class AuthenticatorBase extends ValveBase
      * @exception ServletException
      *                if thrown by a processing element
      */
+    // invoke方法是Valve接口的主要工作方法。
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {
 
@@ -628,6 +631,7 @@ public abstract class AuthenticatorBase extends ValveBase
                 }
             }
 
+            // doAuthenticate执行用户身份验证，它是一个抽象方法，其具体实现在子类中。
             if (jaspicProvider == null && !doAuthenticate(request, response) ||
                     jaspicProvider != null &&
                             !authenticateJaspic(request, response, jaspicState, false)) {

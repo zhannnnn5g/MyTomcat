@@ -37,6 +37,8 @@ import org.ietf.jgss.GSSName;
  *
  * @author Craig R. McClanahan
  */
+// 安全性功能之--领域对象接口 Realm
+// 领域对象通常与一个Context容器相关联
 public interface Realm extends Contained {
 
     /**

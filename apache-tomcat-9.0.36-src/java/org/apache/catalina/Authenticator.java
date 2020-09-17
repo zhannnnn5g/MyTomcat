@@ -30,6 +30,7 @@ import org.apache.catalina.connector.Request;
  *
  * @author Craig R. McClanahan
  */
+// 安全性功能之--验证器接口 Authenticator
 public interface Authenticator {
 
     /**

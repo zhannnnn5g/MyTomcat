@@ -69,6 +69,8 @@ import org.ietf.jgss.GSSName;
  *
  * @author Craig R. McClanahan
  */
+// Realm接口的实现类，是一个抽象类
+// 基于RealmBase类，还提供了一些具体实现类，比如 JDBCRealm， JNDIRealm 等。
 public abstract class RealmBase extends LifecycleMBeanBase implements Realm {
 
     private static final Log log = LogFactory.getLog(RealmBase.class);

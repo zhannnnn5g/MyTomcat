@@ -27,6 +27,7 @@ import org.apache.tomcat.util.buf.UDecoder;
  *
  * @author Craig R. McClanahan
  */
+// 登陆配置类
 public class LoginConfig extends XmlEncodingBase implements Serializable {
 
 
@@ -53,6 +54,10 @@ public class LoginConfig extends XmlEncodingBase implements Serializable {
      * @param loginPage The login page URI
      * @param errorPage The error page URI
      */
+    // 登陆配置类，它包含了:
+    // 一个领域对象的名字：realmName
+    // 身份验证方法：authMethod
+    // 如果是使用的基于表单（FORM）的身份验证方法，则在loginPage属性中存储字符串形式的登录页面URL，以及在errorPage属性中存储字符串形式的错误页面URL
     public LoginConfig(String authMethod, String realmName,
                        String loginPage, String errorPage) {
 

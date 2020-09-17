@@ -32,6 +32,9 @@ import org.ietf.jgss.GSSCredential;
  *
  * @author Craig R. McClanahan
  */
+// 安全性功能之--主体对象接口 Principal。
+// GenericPrincipal 类实现了 Principal 接口(通过 TomcatPrincipal 类)。
+// 一个GenericPrincipal实例必须与一个Realm领域对象相关联（通过GenericPrincipal的构造函数）
 public class GenericPrincipal implements TomcatPrincipal, Serializable {
 
     private static final long serialVersionUID = 1L;

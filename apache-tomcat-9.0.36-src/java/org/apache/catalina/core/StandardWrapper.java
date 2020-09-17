@@ -88,6 +88,7 @@ public class StandardWrapper extends ContainerBase
     public StandardWrapper() {
 
         super();
+        // StandardWrapper的构造函数会设置一个StandardWrapperValve实例作为它的pipeline的基础阀
         swValve=new StandardWrapperValve();
         pipeline.setBasic(swValve);
         broadcaster = new NotificationBroadcasterSupport();
