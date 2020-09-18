@@ -52,6 +52,8 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  */
+// ApplicationFilterConfig用于管理Web应用程序第一次启动时创建的所有过滤器实例。
+// ApplicationFilterConfig实现了FilterConfig接口。
 public final class ApplicationFilterConfig implements FilterConfig, Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -89,6 +91,9 @@ public final class ApplicationFilterConfig implements FilterConfig, Serializable
      * @throws SecurityException
      * @throws IllegalArgumentException
      */
+    // 从构造函数中可以看见，ApplicationFilterConfig持有Context对象和FilterDef对象。
+    // Context对象表示一个Web应用程序。
+    // FilterDef对象表示一个过滤器的定义。
     ApplicationFilterConfig(Context context, FilterDef filterDef)
             throws ClassCastException, ReflectiveOperationException, ServletException,
             NamingException, IllegalArgumentException, SecurityException {
@@ -237,6 +242,7 @@ public final class ApplicationFilterConfig implements FilterConfig, Serializable
      * @throws SecurityException
      * @throws IllegalArgumentException
      */
+    // getFilter方法返回一个Filter对象，该方法负责载入并实例化一个过滤器类。
     Filter getFilter() throws ClassCastException, ReflectiveOperationException, ServletException,
             NamingException, IllegalArgumentException, SecurityException {
 

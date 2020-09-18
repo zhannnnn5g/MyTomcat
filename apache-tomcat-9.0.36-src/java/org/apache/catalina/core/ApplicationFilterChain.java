@@ -176,8 +176,8 @@ public final class ApplicationFilterChain implements FilterChain {
                                   ServletResponse response)
         throws IOException, ServletException {
 
-        // 做一个判断，如果当前 Filter 的位置小于 Filter 数组的长度，也就是说 Filter 还没调完，就从 Filter 数组拿下一个 Filter，调用它的 doFilter 方法。
-        // 否则，意味着所有 Filter 都调到了，就调用 Servlet 的 service 方法。Filter 链中的最后一个 Filter 会负责调用 Servlet 的 service 方法。
+        // 1.做一个判断，如果当前 Filter 的位置小于 Filter 数组的长度，也就是说 Filter 还没调完，就从 Filter 数组拿下一个 Filter，调用它的 doFilter 方法。
+        // 否则，意味着所有 Filter 都调到了，就调用 Servlet 的 service 方法。过滤器链中的最后一个 Filter 会负责调用 Servlet 的 service 方法。
         // Call the next filter if there is one
         if (pos < n) {
             ApplicationFilterConfig filterConfig = filters[pos++];
@@ -197,6 +197,9 @@ public final class ApplicationFilterChain implements FilterChain {
                     Object[] args = new Object[]{req, res, this};
                     SecurityUtil.doAsPrivilege ("doFilter", filter, classType, args, principal);
                 } else {
+                    // 注意，Servlet规范中Filter接口中的doFilter()方法，其第三个参数是FilterChain接口类型。
+                    // 而这里的ApplicationFilterChain是实现了FilterChain接口的。因此这里把this作为第3个参数传入。
+                    // 而在Filter过滤器的具体实现中，是通过FilterChain.doFilter()来调用下一个过滤器的，这样就实现了过滤器的链式调用。
                     filter.doFilter(request, response, this);
                 }
             } catch (IOException | ServletException | RuntimeException e) {
@@ -209,6 +212,7 @@ public final class ApplicationFilterChain implements FilterChain {
             return;
         }
 
+        // 2.如果是过滤器链中的最后一个过滤器，则会执行到后面的代码。
         // We fell off the end of the chain -- call the servlet instance
         try {
             if (ApplicationDispatcher.WRAP_SAME_OBJECT) {
@@ -235,6 +239,7 @@ public final class ApplicationFilterChain implements FilterChain {
                                            args,
                                            principal);
             } else {
+                // 过滤器链中的最后一个 Filter，负责调用 servlet实例 的 service 方法。
                 servlet.service(request, response);
             }
         } catch (IOException | ServletException | RuntimeException e) {

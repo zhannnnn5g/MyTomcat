@@ -70,6 +70,8 @@ import org.apache.tomcat.util.modeler.Util;
  * @author Craig R. McClanahan
  * @author Remy Maucherat
  */
+// StandardWrapper不仅实现了Wrapper接口，
+// 还实现了ServletConfig接口，因此可以在servlet初始化期间通过ServletConfig对象向servlet传输信息
 @SuppressWarnings("deprecation") // SingleThreadModel
 public class StandardWrapper extends ContainerBase
     implements ServletConfig, Wrapper, NotificationEmitter {
@@ -749,6 +751,10 @@ public class StandardWrapper extends ContainerBase
         boolean newInstance = false;
 
         // If not SingleThreadedModel, return the same instance every time
+        // 1. StandardWrapper处理非STM servlet实例
+        // 只会载入该servlet实例一次，并对随后的请求都返回该servlet类的同一个实例。
+        // StandardWrapper并不需要多个servlet实例，因为它假设该servlet实例的service()方法在多线程环境中是线程安全的。
+        // 如果需要线程同步，它假定由servlet程序员（业务代码实现者）来负责同步对共享资源的访问。
         if (!singleThreadModel) {
             // Load and initialize our instance if necessary
             if (instance == null || !instanceInitialized) {
@@ -761,6 +767,7 @@ public class StandardWrapper extends ContainerBase
 
                             // Note: We don't know if the Servlet implements
                             // SingleThreadModel until we have loaded it.
+                            // 如果 instance == null，调用 loadServlet 方法载入一个Servlet新实例
                             instance = loadServlet();
                             newInstance = true;
                             if (!singleThreadModel) {
@@ -800,15 +807,20 @@ public class StandardWrapper extends ContainerBase
                 if (!newInstance) {
                     countAllocated.incrementAndGet();
                 }
+                // 处理非STM servlet实例时，直接返回 instance。
                 return instance;
             }
         }
 
+        // 2. StandardWrapper处理STM servlet实例
         synchronized (instancePool) {
+            // countAllocated 代表已分配的instance个数，nInstances代表当前的instance个数。
+            // countAllocated.get() >= nInstances 表示已分配的个数没有空余的，需要创建新的sSTM ervlet实例
             while (countAllocated.get() >= nInstances) {
                 // Allocate a new instance if possible, or else wait
                 if (nInstances < maxInstances) {
                     try {
+                        // 调用 loadServlet 方法 创建新servlet实例，并压入instancePool栈
                         instancePool.push(loadServlet());
                         nInstances++;
                     } catch (ServletException e) {
@@ -819,6 +831,7 @@ public class StandardWrapper extends ContainerBase
                     }
                 } else {
                     try {
+                        // 当 nInstances >= maxInstances 时，等待，直到某个STM servlet实例被放回栈中。
                         instancePool.wait();
                     } catch (InterruptedException e) {
                         // Ignore
@@ -829,6 +842,7 @@ public class StandardWrapper extends ContainerBase
                 log.trace("  Returning allocated STM instance");
             }
             countAllocated.incrementAndGet();
+            // 弹出一个servlet实例
             return instancePool.pop();
         }
     }
@@ -1019,17 +1033,21 @@ public class StandardWrapper extends ContainerBase
      * @return the loaded Servlet instance
      * @throws ServletException for a Servlet load error
      */
+    // 该方法实现载入servlet实例
     public synchronized Servlet loadServlet() throws ServletException {
 
         // Nothing to do if we already have an instance or an instance pool
         if (!singleThreadModel && (instance != null))
             return instance;
 
+        // 获取System.out和System.err对象的输出，
+        // 以便于后面使用ServletContext的log方法记录日志消息。
         PrintStream out = System.out;
         if (swallowOutput) {
             SystemLogHandler.startCapture();
         }
 
+        // 定义servlet实例
         Servlet servlet;
         try {
             long t1=System.currentTimeMillis();
@@ -1043,6 +1061,7 @@ public class StandardWrapper extends ContainerBase
             InstanceManager instanceManager = ((StandardContext)getParent()).getInstanceManager();
             try {
                 // 1. 创建一个Servlet实例
+                // servletClass是一个字符串，代表全限定的servlet类名.
                 servlet = (Servlet) instanceManager.newInstance(servletClass);
             } catch (ClassCastException e) {
                 unavailable(null);
@@ -1077,12 +1096,17 @@ public class StandardWrapper extends ContainerBase
             // Special handling for ContainerServlet instances
             // Note: The InstanceManager checks if the application is permitted
             //       to load ContainerServlets
+            // 检查该servlet实例是否是一个ContainerServlet类型的servlet。
+            // 实现了ContainerServlet接口的servlet可以访问Catalina的内部功能。
+            // 若该servlet是一个ContainerServlet类型的servlet，则调用ContainerServlet接口的setWrapper方法，将当前的Wrapper实例传递进去。
             if (servlet instanceof ContainerServlet) {
                 ((ContainerServlet) servlet).setWrapper(this);
             }
 
             classLoadTime=(int) (System.currentTimeMillis() -t1);
 
+            // 判断servlet是否是一个STM servlet，若是的话，需要一个servlet STM实例池，
+            // 若实例池还没创建，则创建一个，赋值给 instancePool
             if (servlet instanceof SingleThreadModel) {
                 if (instancePool == null) {
                     instancePool = new Stack<>();
@@ -1093,11 +1117,14 @@ public class StandardWrapper extends ContainerBase
             // 2.调用了Servlet的init方法，这是Servlet规范要求的
             initServlet(servlet);
 
+            // 触发 load 事件
             fireContainerEvent("load", this);
 
             loadTime=System.currentTimeMillis() -t1;
         } finally {
             if (swallowOutput) {
+                // 在finally代码块中，停止捕获System.out和System.err对象，
+                // 并记录在载入servlet时产生的日志消息，这些日志会被记录到ServletContext中(通过ServletContext的log()方法)。
                 String log = SystemLogHandler.stopCapture();
                 if (log != null && log.length() > 0) {
                     if (getServletContext() != null) {
@@ -1136,6 +1163,14 @@ public class StandardWrapper extends ContainerBase
                     }
                 }
             } else {
+                // 调用servlet实例的init方法。传入了一个StandardWrapperFacade外观对象。
+                // Servlet接口init方法的原型是： void init(ServletConfig config)，也就是说，init方法需要一个ServletConfig类型的对象。
+                // 而StandardWrapper类本身实现了ServletConfig接口，因此可以将StandardWrapper自己(this)传入init方法。
+                // 但是StandardWrapper需要将自己的大部分public方法对Servlet程序员隐藏起来，
+                // 为实现这个目的，StandardWrapper类将自身实例包装成StandardWrapperFacade类的一个实例。
+                // StandardWrapperFacade类也实现了ServletConfig接口，
+                // 并且在StandardWrapperFacade的构造函数中，保持了一个ServletConfig config对象，
+                // 在实际调用时，传入的是tandardWrapper类实例：StandardWrapperFacade facade = new StandardWrapperFacade(this);
                 servlet.init(facade);
             }
 
@@ -1293,6 +1328,7 @@ public class StandardWrapper extends ContainerBase
                         SecurityUtil.remove(instance);
                     }
                 } else {
+                    // 调用servlet实例的destroy方法
                     instance.destroy();
                 }
 

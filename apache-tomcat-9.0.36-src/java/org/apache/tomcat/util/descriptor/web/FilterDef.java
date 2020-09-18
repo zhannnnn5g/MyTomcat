@@ -31,6 +31,8 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  */
+// FilterDef类表示Web应用中的一个过滤器定义。
+// FilterDef类中的每个属性表示在web.xml中定义filter元素时声明的子元素。
 public class FilterDef implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -49,6 +49,9 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  */
+// StandardWrapperValve 是 StandardWrapper 实例的基础阀，它的invoke方法中需要完成2个操作：
+// 1. 执行与该servlet实例关联的全部过滤器。
+// 2. 调用servlet实例的service()方法。
 final class StandardWrapperValve
     extends ValveBase {
 
@@ -132,6 +135,7 @@ final class StandardWrapperValve
         // Allocate a servlet instance to process this request
         try {
             if (!unavailable) {
+                // 1.调用StandardWrapper实例的allocate方法获取该allocate实例所代表的servlet实例。
                 servlet = wrapper.allocate();
             }
         } catch (UnavailableException e) {
@@ -170,6 +174,7 @@ final class StandardWrapperValve
         request.setAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR,
                 requestPathMB);
         // Create the filter chain for this request
+        // 2.调用createFilterChain方法，创建过滤器链
         ApplicationFilterChain filterChain =
                 ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);
 
@@ -185,6 +190,7 @@ final class StandardWrapperValve
                         if (request.isAsyncDispatching()) {
                             request.getAsyncContextInternal().doInternalDispatch();
                         } else {
+                            // 3.调用过滤器链filterChain的doFilter()方法，在这其中，包括了调用servlet实例的service()方法。
                             filterChain.doFilter(request.getRequest(),
                                     response.getResponse());
                         }
@@ -257,11 +263,13 @@ final class StandardWrapperValve
             exception(request, response, e);
         } finally {
             // Release the filter chain (if any) for this request
+            // 4.在finally中释放过滤器链。
             if (filterChain != null) {
                 filterChain.release();
             }
 
             // Deallocate the allocated servlet instance
+            // 5.调用StandardWrapper实例的deallocate方法，释放servlet实例到对象池中。
             try {
                 if (servlet != null) {
                     wrapper.deallocate(servlet);
@@ -278,6 +286,7 @@ final class StandardWrapperValve
 
             // If this servlet has been marked permanently unavailable,
             // unload it and release this instance
+            // 6.如果该servlet实例再也不会被用到，则调用wrapper实例的unload方法，unload方法中会调用servlet实例的destroy()方法。
             try {
                 if ((servlet != null) &&
                     (wrapper.getAvailable() == Long.MAX_VALUE)) {
