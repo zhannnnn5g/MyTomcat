@@ -159,7 +159,7 @@ public class StandardContext extends ContainerBase
     public StandardContext() {
 
         super();
-        // StandardContext 的构造函数会设置一个StandardWrapperValve实例作为它的pipeline的基础阀
+        // StandardContext 的构造函数会设置一个 StandardContextValve 实例作为它的管道对象pipeline的基础阀
         pipeline.setBasic(new StandardContextValve());
         broadcaster = new NotificationBroadcasterSupport();
         // Set defaults

@@ -73,6 +73,7 @@ final class StandardContextValve extends ValveBase {
         }
 
         // Select the Wrapper to be used for this Request
+        // NOTE: 从 request 中获取 Wrapper实例。从而StandardContext实例能够正确处理引入的每个HTTP请求。
         Wrapper wrapper = request.getWrapper();
         if (wrapper == null || wrapper.isUnavailable()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);

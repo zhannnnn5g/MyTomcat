@@ -1280,11 +1280,11 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
     // -------------------- Background Thread --------------------
 
-    // Tomcat 用后台线程来实现热加载和热部署。
     /**
      * Start the background thread that will periodically check for
      * session timeouts.
      */
+    // Tomcat 用后台线程来实现热加载和热部署。
     protected void threadStart() {
         if (backgroundProcessorDelay > 0
                 && (getState().isAvailable() || LifecycleState.STARTING_PREP.equals(getState()))
@@ -1355,7 +1355,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         @Override
         public void run() {
-            // 请注意这里传入的参数是"宿主类"的实例，也就是 ContainerBase 的类实例，当成参数传给了 run 方法
+            // 请注意这里传入的参数是"宿主类"的实例，也就是 ContainerBase 的类实例，当成参数传给了 processChildren 方法
             processChildren(ContainerBase.this);
         }
 
@@ -1381,7 +1381,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                 // 1. 调用当前容器的backgroundProcess方法。
                 container.backgroundProcess();
 
-                //2. 遍历所有的子容器，递归调用processChildren，这样当前容器的子孙都会被处理
+                // 2. 遍历所有的子容器，递归调用processChildren，这样当前容器的子孙都会被处理
+                // 各个层次的容器，通过实现backgroundProcess()方法，可以使用一个专用线程来执行周期性的任务，
+                // 比如检查类的时间戳或检查session对象的超时时间。它们都会在这里被调用。
                 Container[] children = container.findChildren();
                 for (Container child : children) {
                     // 这里注意，容器基类有个变量叫做backgroundProcessorDelay，
