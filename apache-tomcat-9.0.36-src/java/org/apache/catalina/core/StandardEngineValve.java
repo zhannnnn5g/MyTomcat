@@ -60,7 +60,7 @@ final class StandardEngineValve extends ValveBase {
         throws IOException, ServletException {
 
         // Select the Host to be used for this Request
-        // 拿到请求中的Host容器
+        // 1.拿到请求中的Host容器
         Host host = request.getHost();
         if (host == null) {
             // HTTP 0.9 or HTTP 1.0 request without a host when no default host
@@ -72,7 +72,8 @@ final class StandardEngineValve extends ValveBase {
         }
 
         // Ask this Host to process this request
-        // 调用Host容器中的Pipeline中的第一个Valve
+        // 2.调用Host容器中的Pipeline中的第一个Valve
+        // 向Host容器实例的管道的阀传递invoke调用，以便StandardHostValve来处理HTTP请求。
         host.getPipeline().getFirst().invoke(request, response);
     }
 }

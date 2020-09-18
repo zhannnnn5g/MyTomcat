@@ -61,13 +61,15 @@ import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.threads.TaskThreadFactory;
 
-// Server 组件的具体实现类是 StandardServer
 /**
  * Standard implementation of the <b>Server</b> interface, available for use
  * (but not required) when deploying and starting Catalina.
  *
  * @author Craig R. McClanahan
  */
+// 服务器组件(Server)的具体实现类是 StandardServer
+// 服务器组件(Server)囊括了所有的组件，因此它的主要功能是用于对所有组件实现一键起停。
+// 服务器组件(Server)会包含一组监听器Listener，以及一组服务组件(Service)等。
 public final class StandardServer extends LifecycleMBeanBase implements Server {
 
     private static final Log log = LogFactory.getLog(StandardServer.class);
@@ -120,6 +122,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     /**
      * The port number on which we wait for shutdown commands.
      */
+    // port属性定义了Server组件会从哪个端口获取关闭命令。
     private int port = 8005;
 
     private int portOffset = 0;
@@ -148,6 +151,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     /**
      * The shutdown command string we are looking for.
      */
+    // shutdown属性中保存了用于发送给Server实例来关闭整个系统的关闭命令。
     private String shutdown = "SHUTDOWN";
 
 
@@ -504,6 +508,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      *
      * @param service The Service to be added
      */
+    // 可以调用addService方法来为Server组件添加Service组件。
     @Override
     public void addService(Service service) {
 
@@ -614,6 +619,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                     InputStream stream;
                     long acceptStartTime = System.currentTimeMillis();
                     try {
+                        // 有新的连接到来就建立连接
                         socket = serverSocket.accept();
                         socket.setSoTimeout(10 * 1000);  // Ten seconds
                         stream = socket.getInputStream();
@@ -683,6 +689,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             awaitSocket = null;
 
             // Close the server socket and return
+            // 如果try中的while循环被break（与停止命令“SHUTDOWN”比较，如果相等，就break，退出循环），则会执行到这里，关闭serverSocket
             if (serverSocket != null) {
                 try {
                     serverSocket.close();
@@ -934,6 +941,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         globalNamingResources.start();
 
         // Start our defined Services
+        // 用于启动所有添加到Server组件中的Service组件。
         synchronized (servicesLock) {
             for (Service service : services) {
                 service.start();
@@ -997,6 +1005,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         fireLifecycleEvent(CONFIGURE_STOP_EVENT, null);
 
         // Stop our defined Services
+        // 用于关闭所有添加到Server组件中的Service组件。
         for (Service service : services) {
             service.stop();
         }
@@ -1062,6 +1071,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             }
         }
         // Initialize our defined Services
+        // 用于初始化所有添加到Server组件中的Service组件。
         for (Service service : services) {
             service.init();
         }

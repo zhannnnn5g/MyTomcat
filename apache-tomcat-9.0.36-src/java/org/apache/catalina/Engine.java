@@ -40,7 +40,6 @@ package org.apache.catalina;
  *
  * @author Craig R. McClanahan
  */
-// Engine表示整个Catalina Servlet引擎。
 public interface Engine extends Container {
 
     /**

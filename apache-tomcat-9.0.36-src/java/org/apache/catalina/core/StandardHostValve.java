@@ -108,6 +108,7 @@ final class StandardHostValve extends ValveBase {
         throws IOException, ServletException {
 
         // Select the Context to be used for this Request
+        // NOTE：在StandardHostValve的invoke方法中，会获取相应的Condext实例（从request中获取Context实例）来处理每个HTTP请求。
         Context context = request.getContext();
         if (context == null) {
             return;
@@ -120,6 +121,7 @@ final class StandardHostValve extends ValveBase {
         boolean asyncAtStart = request.isAsync();
 
         try {
+            // 绑定StandardHostValve类的ClassLoader到context中。
             context.bind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
 
             if (!asyncAtStart && !context.fireRequestInitEvent(request.getRequest())) {
@@ -136,6 +138,7 @@ final class StandardHostValve extends ValveBase {
             // application for processing.
             try {
                 if (!response.isErrorReportRequired()) {
+                    // 向Context实例的管道的阀传递invoke调用，以便StandardContextValve来处理HTTP请求。
                     context.getPipeline().getFirst().invoke(request, response);
                 }
             } catch (Throwable t) {

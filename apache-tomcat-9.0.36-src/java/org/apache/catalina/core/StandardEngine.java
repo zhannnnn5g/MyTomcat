@@ -52,6 +52,8 @@ import org.apache.juli.logging.LogFactory;
  *
  * @author Craig R. McClanahan
  */
+// Engine容器表示Catalina的整个Servlet引擎。
+// 当部署Tomcat时要支持多个虚拟机的话，就需要使用多个Engine容器。
 public class StandardEngine extends ContainerBase implements Engine {
 
     private static final Log log = LogFactory.getLog(StandardEngine.class);
@@ -66,6 +68,7 @@ public class StandardEngine extends ContainerBase implements Engine {
 
         super();
         // 每一个容器组件都有一个 Pipeline，Pipeline 中有一个基础阀（Basic Valve）
+        // Engine容器的基础阀为一个StandardEngineValve实例。
         pipeline.setBasic(new StandardEngineValve());
         /* Set the jmvRoute using the system property jvmRoute */
         try {
@@ -213,6 +216,7 @@ public class StandardEngine extends ContainerBase implements Engine {
     @Override
     public void addChild(Container child) {
 
+        // Engine容器的子容器只能是Host容器，如果不是Host容器，则会抛出IllegalArgumentException异常。
         if (!(child instanceof Host))
             throw new IllegalArgumentException
                 (sm.getString("standardEngine.notHost"));
@@ -230,6 +234,8 @@ public class StandardEngine extends ContainerBase implements Engine {
     @Override
     public void setParent(Container container) {
 
+        // Engine容器是最顶层容器，不能有父容器了，
+        // 如果为Engine容器添加一个父容器，则会抛出IllegalArgumentException异常。
         throw new IllegalArgumentException
             (sm.getString("standardEngine.notParent"));
 
@@ -261,7 +267,7 @@ public class StandardEngine extends ContainerBase implements Engine {
         }
 
         // Standard container startup
-        // Engine 直接使用了父类ContainerBase的方法，启动 Host 子容器。
+        // Engine容器直接使用了父类ContainerBase的方法，启动 Host 子容器。
         super.startInternal();
     }
 

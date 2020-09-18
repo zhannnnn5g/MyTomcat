@@ -67,6 +67,7 @@ public class StandardHost extends ContainerBase implements Host {
     public StandardHost() {
 
         super();
+        // 添加一个基础阀实例到StandardHost的管道对象中。
         pipeline.setBasic(new StandardHostValve());
 
     }
@@ -814,6 +815,7 @@ public class StandardHost extends ContainerBase implements Host {
     @Override
     protected synchronized void startInternal() throws LifecycleException {
 
+        // StandardHost实例会会添加一个ErrorReportValve阀。
         // Set error report valve
         String errorValve = getErrorReportValveClass();
         if ((errorValve != null) && (!errorValve.equals(""))) {
@@ -827,6 +829,7 @@ public class StandardHost extends ContainerBase implements Host {
                     }
                 }
                 if(!found) {
+                    // 如果没找到ErrorReportValve阀的实例，则创建一个
                     Valve valve =
                         (Valve) Class.forName(errorValve).getConstructor().newInstance();
                     getPipeline().addValve(valve);

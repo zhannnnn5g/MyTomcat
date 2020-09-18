@@ -39,7 +39,6 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.res.StringManager;
 
-// Service 组件的具体实现类是 StandardService
 /**
  * Standard implementation of the <code>Service</code> interface.  The
  * associated Container is generally an instance of Engine, but this is
@@ -47,7 +46,11 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  */
-
+// Service 组件的具体实现类是 StandardService。
+// 它的主要功能是封装了servlet容器和连接器之间的关系，所有的连接器都会与一个servlet容器相关联。
+// 一个服务组件(Service)中有2种组件：连接器（connector）和servlet容器（container）。
+// 其中servlet容器(Engine容器)实例只有一个，而连接器(Connector)实例可以有多个。
+// 多个连接器使Tomcat可以为多种不同的请求协议提供服务（比如一个连接器提供HTTP请求，另一个连接器提供HTTPS请求）。
 public class StandardService extends LifecycleMBeanBase implements Service {
 
     private static final Log log = LogFactory.getLog(StandardService.class);
@@ -416,7 +419,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
-    // Service 启动方法
+    // Service组件启动方法，会启动Service组件中servlet容器和所有的连接器。
     @Override
     protected void startInternal() throws LifecycleException {
 

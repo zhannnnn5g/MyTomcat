@@ -73,7 +73,7 @@ final class StandardContextValve extends ValveBase {
         }
 
         // Select the Wrapper to be used for this Request
-        // NOTE: 从 request 中获取 Wrapper实例。从而StandardContext实例能够正确处理引入的每个HTTP请求。
+        // NOTE：在StandardContextValve的invoke方法中，会获取相应的Wrapper实例（从request中获取Context实例）来处理每个HTTP请求。
         Wrapper wrapper = request.getWrapper();
         if (wrapper == null || wrapper.isUnavailable()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -94,6 +94,7 @@ final class StandardContextValve extends ValveBase {
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(wrapper.getPipeline().isAsyncSupported());
         }
+        // 向Wrapper实例的管道的阀传递invoke调用，以便StandardWrapperValve来处理HTTP请求。
         wrapper.getPipeline().getFirst().invoke(request, response);
     }
 }
